@@ -9,6 +9,10 @@ execute:
 
 In this analysis, we explore whether MLB pitchers from different countries display noticeable preferences in pitch selection. Using Statcast pitch-level data from WBC rosters, we compare pitch usage rates across the top represented countries.
 
+::: {.panel-tabset}
+
+## All Countries
+
 ```{r}
 library(tidyverse)
 library(plotly)
@@ -36,17 +40,24 @@ top_countries <- pitch_data |>
   slice_max(n, n = 6) |>
   pull(country_name)
 
-# Calculate percentage usage for each pitch type by country
-pitch_summary <- pitch_data |>
+# Filter data to top countries and known pitch types, and create count label
+clean_data <- pitch_data |>
   filter(country_name %in% top_countries, pitch_type %in% names(pitch_labels)) |>
-  mutate(pitch_name = pitch_labels[pitch_type]) |>
+  mutate(
+    pitch_name = pitch_labels[pitch_type],
+    count_str = paste0(balls, "-", strikes),
+    country_name = factor(country_name, levels = sort(unique(country_name)))
+  )
+
+# Calculate usage overall ("All Counts")
+all_summary <- clean_data |>
   count(country_name, pitch_name) |>
   group_by(country_name) |>
   mutate(pct = round(n / sum(n) * 100, 1)) |>
   ungroup()
 
-# Build horizontal bar plot faceted across countries
-p <- ggplot(pitch_summary, aes(
+# Build the original horizontal bar plot faceted across countries
+p <- ggplot(all_summary, aes(
   x = pct,
   y = reorder(pitch_name, pct),
   fill = country_name,
@@ -58,7 +69,7 @@ p <- ggplot(pitch_summary, aes(
 )) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~country_name, nrow = 2) +
-  scale_x_continuous(labels = \(x) paste0(x, "%")) +
+  scale_x_continuous(labels = \(x) paste0(x, "%"), limits = c(0, 80)) +
   scale_fill_brewer(palette = "Set2") +
   labs(
     title = "Pitch Selection by Pitcher Nationality",
@@ -73,8 +84,147 @@ p <- ggplot(pitch_summary, aes(
     plot.title = element_text(face = "bold", size = 14)
   )
 
-ggplotly(p, tooltip = "text")
+# Convert to interactive plotly object, preserving the ggplot format
+gp <- ggplotly(p, tooltip = "text")
+
+# Calculate usage for each individual ball-strike count
+count_summary <- clean_data |>
+  count(country_name, count_str, pitch_name) |>
+  group_by(country_name, count_str) |>
+  mutate(pct = round(n / sum(n) * 100, 1)) |>
+  ungroup()
+
+# Options for the dropdown menu
+counts <- c("All Counts", sort(unique(clean_data$count_str)))
+num_counts <- length(counts)
+facet_countries <- levels(clean_data$country_name)
+
+# Add traces for each count to match the 6 facet panels
+for (k in 2:num_counts) {
+  cnt <- counts[k]
+  for (i in seq_along(facet_countries)) {
+    ctry <- facet_countries[i]
+    base_trace <- gp$x$data[[i]]
+    pitches <- sub(".*<br>(.*?):.*", "\\1", base_trace$text)
+    
+    ctry_cnt_data <- count_summary |>
+      filter(country_name == ctry, count_str == cnt)
+    
+    widths <- numeric(length(pitches))
+    texts <- character(length(pitches))
+    
+    for (j in seq_along(pitches)) {
+      p_name <- pitches[j]
+      match_row <- ctry_cnt_data |> filter(pitch_name == p_name)
+      if (nrow(match_row) > 0) {
+        widths[j] <- match_row$pct[1]
+        texts[j] <- paste0(
+          "<b>", ctry, " (", cnt, ")</b><br>",
+          p_name, ": ", match_row$pct[1], "%<br>",
+          "Pitches: ", scales::comma(match_row$n[1])
+        )
+      } else {
+        widths[j] <- 0
+        texts[j] <- paste0("<b>", ctry, " (", cnt, ")</b><br>", p_name, ": 0%")
+      }
+    }
+    
+    new_trace <- base_trace
+    new_trace$width <- widths
+    new_trace$x <- widths / 2
+    new_trace$text <- texts
+    new_trace$visible <- FALSE
+    new_trace$name <- paste(ctry, cnt)
+    
+    gp$x$data[[length(gp$x$data) + 1]] <- new_trace
+  }
+}
+
+# Create buttons for the dropdown menu
+buttons <- lapply(seq_along(counts), \(k) {
+  vis <- rep(FALSE, 6 * num_counts)
+  vis[((k - 1) * 6 + 1):(k * 6)] <- TRUE
+  list(
+    method = "restyle",
+    args = list("visible", as.list(vis)),
+    label = ifelse(counts[k] == "All Counts", "All pitches", counts[k])
+  )
+})
+
+# Place dropdown to the far left and above the panels so it never covers the graph
+gp <- gp |> layout(
+  margin = list(t = 125, l = 100),
+  title = list(
+    x = 0.0,
+    y = 0.98,
+    xanchor = "left",
+    yanchor = "top"
+  ),
+  updatemenus = list(
+    list(
+      type = "dropdown",
+      direction = "down",
+      x = -0.15,
+      y = 1.20,
+      xanchor = "left",
+      yanchor = "bottom",
+      active = 0,
+      buttons = buttons
+    )
+  )
+)
+
+gp
 ```
+
+## Japan Spotlight
+
+```{r}
+japan_summary <- clean_data |>
+  filter(country_name == "Japan") |>
+  count(pitch_name) |>
+  mutate(
+    pct = round(n / sum(n) * 100, 1),
+    is_splitter = ifelse(pitch_name == "Splitter", "Splitter", "Other Pitches")
+  )
+
+p_japan <- ggplot(japan_summary, aes(
+  x = pct,
+  y = reorder(pitch_name, pct),
+  fill = is_splitter,
+  text = paste0(
+    "<b>Japan</b><br>",
+    pitch_name, ": ", pct, "%<br>",
+    "Pitches: ", scales::comma(n)
+  )
+)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_manual(values = c("Splitter" = "#fc8d62", "Other Pitches" = "#8da0cb")) +
+  scale_x_continuous(labels = \(x) paste0(x, "%"), limits = c(0, 45)) +
+  labs(
+    title = "Japan Pitch Selection Snapshot",
+    subtitle = "Heavy reliance on the Splitter (15.4% of total pitches thrown)",
+    x = "Usage (%)",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  )
+
+ggplotly(p_japan, tooltip = "text")
+```
+
+### Why Is the Splitter Thrown So Often by Japanese Pitchers?
+
+In Nippon Professional Baseball (NPB) and Japan's youth development programs—anchored by the prestigious Summer Koshien high school tournament—the forkball and splitter have been central to pitching strategy for decades. First popularized in the 1950s by Chunichi Dragons ace Shigeru Sugishita and brought onto the world stage by Hideo Nomo's MLB debut in 1995, Japanese coaches have traditionally viewed the split-finger pitch as the ultimate strikeout weapon. Unlike in American youth baseball where horizontal breaking balls like sliders are widely taught, Japanese coaches historically favored straight-line, vertical-drop off-speed pitches to minimize rotational stress on developing elbows and shoulders.
+
+Biomechanical and delivery mechanics also play a major role in the pitch's effectiveness. Japanese pitching instruction places immense emphasis on maintaining an over-the-top arm slot and deep extension toward home plate. Pitchers begin conditioning their finger flexibility early, intentionally widening the gap between their index and middle fingers to create a secure, split grip. Because a splitter is released with identical arm speed, slot, and intent as a four-seam fastball, it tunnels through the zone looking like a strike before the reduced backspin causes it to drop abruptly beneath the batter's swing plane.
+
+Finally, modern success in Major League Baseball has continually validated the pitch across generations. Stars like Hiroki Kuroda and Masahiro Tanaka relied heavily on the splitter to navigate elite MLB lineups, while contemporary aces like Shohei Ohtani and Kodai Senga—whose signature "Ghost Fork" generates extraordinary whiff rates—have kept the tradition alive. As hitters worldwide become increasingly trained to hit high-velocity fastballs and sweeping breaking balls, the vertical tumbling action of the Japanese splitter provides an irreplaceable competitive edge.
+
+:::
 
 ## Pitch Characteristics by Country
 
