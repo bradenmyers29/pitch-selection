@@ -177,50 +177,48 @@ gp <- gp |> layout(
 gp
 ```
 
-## Japan Spotlight
-
-```{r}
-japan_summary <- clean_data |>
-  filter(country_name == "Japan") |>
-  count(pitch_name) |>
-  mutate(
-    pct = round(n / sum(n) * 100, 1),
-    is_splitter = ifelse(pitch_name == "Splitter", "Splitter", "Other Pitches")
-  )
-
-p_japan <- ggplot(japan_summary, aes(
-  x = pct,
-  y = reorder(pitch_name, pct),
-  fill = is_splitter,
-  text = paste0(
-    "<b>Japan</b><br>",
-    pitch_name, ": ", pct, "%<br>",
-    "Pitches: ", scales::comma(n)
-  )
-)) +
-  geom_col(show.legend = FALSE) +
-  scale_fill_manual(values = c("Splitter" = "#fc8d62", "Other Pitches" = "#8da0cb")) +
-  scale_x_continuous(labels = \(x) paste0(x, "%"), limits = c(0, 45)) +
-  labs(
-    title = "Japan Pitch Selection Snapshot",
-    subtitle = "Heavy reliance on the Splitter (15.4% of total pitches thrown)",
-    x = "Usage (%)",
-    y = NULL
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14),
-    panel.grid.minor = element_blank()
-  )
-
-ggplotly(p_japan, tooltip = "text")
-```
-
-### Why Is the Splitter Thrown So Often by Japanese Pitchers?
+## Why Is the Splitter Thrown So Often by Japanese Pitchers?
 
 In Nippon Professional Baseball (NPB) and Japan's youth development programs—anchored by the prestigious Summer Koshien high school tournament—the forkball and splitter have been central to pitching strategy for decades. First popularized in the 1950s by Chunichi Dragons ace Shigeru Sugishita and brought onto the world stage by Hideo Nomo's MLB debut in 1995, Japanese coaches have traditionally viewed the split-finger pitch as the ultimate strikeout weapon. Unlike in American youth baseball where horizontal breaking balls like sliders are widely taught, Japanese coaches historically favored straight-line, vertical-drop off-speed pitches to minimize rotational stress on developing elbows and shoulders.
 
 Biomechanical and delivery mechanics also play a major role in the pitch's effectiveness. Japanese pitching instruction places immense emphasis on maintaining an over-the-top arm slot and deep extension toward home plate. Pitchers begin conditioning their finger flexibility early, intentionally widening the gap between their index and middle fingers to create a secure, split grip. Because a splitter is released with identical arm speed, slot, and intent as a four-seam fastball, it tunnels through the zone looking like a strike before the reduced backspin causes it to drop abruptly beneath the batter's swing plane.
+
+```{r}
+# Filter to Japanese 4-seam fastballs and splitters
+japan_tunnel <- pitch_data |>
+  filter(country_name == "Japan", pitch_type %in% c("FF", "FS")) |>
+  drop_na(release_speed, release_spin_rate, player_name) |>
+  mutate(pitch_name = ifelse(pitch_type == "FF", "4-Seam Fastball", "Splitter"))
+
+# Scatter plot showing overlapping velocity with sharp spin separation
+p_tunnel <- ggplot(japan_tunnel, aes(
+  x = release_speed,
+  y = release_spin_rate,
+  color = pitch_name,
+  text = paste0(
+    "<b>", player_name, "</b><br>",
+    "Pitch: ", pitch_name, "<br>",
+    "Velocity: ", release_speed, " mph<br>",
+    "Spin: ", scales::comma(release_spin_rate), " rpm"
+  )
+)) +
+  geom_point(alpha = 0.4, size = 1.5) +
+  scale_color_manual(values = c("4-Seam Fastball" = "#4575b4", "Splitter" = "#d73027")) +
+  labs(
+    title = "Release Speed vs. Spin Rate (Japan)",
+    subtitle = "Splitters match fastball velocities while spin rate drops sharply",
+    x = "Release Speed (mph)",
+    y = "Release Spin Rate (rpm)",
+    color = "Pitch Type"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank()
+  )
+
+ggplotly(p_tunnel, tooltip = "text")
+```
 
 Finally, modern success in Major League Baseball has continually validated the pitch across generations. Stars like Hiroki Kuroda and Masahiro Tanaka relied heavily on the splitter to navigate elite MLB lineups, while contemporary aces like Shohei Ohtani and Kodai Senga—whose signature "Ghost Fork" generates extraordinary whiff rates—have kept the tradition alive. As hitters worldwide become increasingly trained to hit high-velocity fastballs and sweeping breaking balls, the vertical tumbling action of the Japanese splitter provides an irreplaceable competitive edge.
 
