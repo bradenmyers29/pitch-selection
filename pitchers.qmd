@@ -224,7 +224,13 @@ Finally, modern success in Major League Baseball has continually validated the p
 
 ## Pitch Characteristics by Country
 
-Each point represents an individual pitch, showing release speed and spin rate across different pitch types for each top country.
+A pitcher's arsenal is defined not only by pitch choice, but also by how those pitches move through the air. Two key Statcast metrics that describe pitch profile are **release speed** (velocity in mph) and **release spin rate** (rotations per minute, or rpm). Spin rate dictates trajectory: high spin on four-seam fastballs produces "ride" that resists gravity, while reduced spin on off-speed pitches allows gravity and drag to pull the ball downward.
+
+Below is a random sample of 400 pitches per country showing how pitch types cluster across these two metrics:
+
+- **Fastball Tunnels:** Four-seam fastballs and sinkers cluster on the right (90–98+ mph). Four-seamers sit higher in spin (often 2,200–2,500 rpm) creating carry, whereas sinkers sit slightly lower in spin to induce ground balls.
+- **Breaking Balls:** Sliders, sweepers, and curveballs occupy the upper-left and center (78–86 mph), relying on high spin (frequently topping 2,400 rpm) for sharp lateral and vertical bite.
+- **Splitter & Off-Speed Separation:** Changeups and splitters drop in velocity to throw off hitters' timing. Notice especially in the Japan panel how splitters separate vertically from fastballs by killing spin down to 1,000–1,500 rpm while maintaining near-fastball arm speed.
 
 ```{r}
 # Sample 400 pitches per country for a balanced and responsive plot
