@@ -1,22 +1,40 @@
-/* Baseball Theme: Ballpark Navy & Baseball Seam Red */
+/* Google Fonts: Montserrat (Athletic Headings) & Inter (Clean Body) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap');
 
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #2b2d42;
+  background-color: #f8f9fa;
+  line-height: 1.7;
+}
+
+/* Baseball Navbar */
 .navbar {
   border-bottom: 3px solid #ba0c2f;
+  box-shadow: 0 2px 10px rgba(12, 35, 64, 0.15);
 }
 
 .navbar .navbar-brand {
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-size: 0.95rem;
 }
 
 .navbar-nav .nav-link {
-  font-weight: 500;
-  transition: all 0.15s ease-in-out;
-  padding-bottom: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.1px;
+  padding: 6px 8px;
+  transition: all 0.2s ease-in-out;
 }
 
 .navbar-nav .nav-link:hover {
   color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
 }
 
 .navbar-nav .nav-link.active {
@@ -24,16 +42,49 @@
   border-bottom: 2px solid #ba0c2f;
 }
 
-/* Baseball navy titles and headings */
+/* Bold Athletic Headings */
 h1, h2, h3, h4 {
+  font-family: 'Montserrat', sans-serif;
   color: #0c2340;
   font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
-/* Subtle red accent for links */
+/* Page Title with Baseball Seam Red Accent Line */
+h1.title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  position: relative;
+}
+
+h1.title::after {
+  content: "";
+  display: block;
+  width: 70px;
+  height: 4px;
+  background-color: #ba0c2f;
+  border-radius: 2px;
+  margin-top: 10px;
+}
+
+/* Content & Plot Cards with Soft Shadows */
+.html-widget, .cell-output-display > div {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(12, 35, 64, 0.06);
+  margin: 20px 0;
+}
+
+/* Links */
 a {
   color: #ba0c2f;
+  font-weight: 500;
   text-decoration: none;
+  transition: color 0.15s ease-in-out;
 }
 
 a:hover {
