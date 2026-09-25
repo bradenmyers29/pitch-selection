@@ -1,0 +1,18 @@
+---
+title: "About"
+format: html
+---
+
+### Author & Project Information
+
+- **Author:** Braden Myers
+- **Affiliation:** [New College of Florida](https://www.ncf.edu)
+- **Contact:** [b.myers30@ncf.edu](mailto:b.myers30@ncf.edu)
+- **GitHub:** [bradenmyers29](https://github.com/bradenmyers29)
+- **Project Repository:** [pitch-selection](https://github.com/bradenmyers29/pitch-selection)
+
+---
+
+### About the Data
+
+The dataset used in this project is sourced from Major League Baseball's [Baseball Savant / Statcast](https://baseballsavant.mlb.com/) system. Statcast uses high-speed tracking cameras and Doppler radar installed in every MLB ballpark to capture pitch-by-pitch mechanics, including release velocity, spin rate, movement profiles, and pitch classifications. Pitchers were cross-referenced with national team rosters from the [World Baseball Classic](https://www.worldbaseballclassic.com/) to analyze international pitch preferences and tactical approaches across countries.

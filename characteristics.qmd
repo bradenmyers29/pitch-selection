@@ -1,0 +1,84 @@
+---
+title: "Pitch Characteristics by Country"
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+A pitcher's arsenal is defined not only by pitch choice, but also by how those pitches move through the air. Two key Statcast metrics that describe pitch profile are **release speed** (velocity in mph) and **release spin rate** (rotations per minute, or rpm). Spin rate dictates trajectory: high spin on four-seam fastballs produces "ride" that resists gravity, while reduced spin on off-speed pitches allows gravity and drag to pull the ball downward.
+
+Below is a random sample of 400 pitches per country showing how pitch types cluster across these two metrics:
+
+- **Fastball Tunnels:** Four-seam fastballs and sinkers cluster on the right (90–98+ mph). Four-seamers sit higher in spin (often 2,200–2,500 rpm) creating carry, whereas sinkers sit slightly lower in spin to induce ground balls.
+- **Breaking Balls:** Sliders, sweepers, and curveballs occupy the upper-left and center (78–86 mph), relying on high spin (frequently topping 2,400 rpm) for sharp lateral and vertical bite.
+- **Splitter & Off-Speed Separation:** Changeups and splitters drop in velocity to throw off hitters' timing. Notice especially in the Japan panel how splitters separate vertically from fastballs by killing spin down to 1,000–1,500 rpm while maintaining near-fastball arm speed.
+
+```{r}
+library(tidyverse)
+library(plotly)
+
+# Load Statcast pitching data
+pitch_data <- read_csv("data/statcast_pitchers.csv", show_col_types = FALSE)
+
+# Map Statcast pitch abbreviations to full names
+pitch_labels <- c(
+  "FF" = "4-Seam Fastball",
+  "SI" = "Sinker",
+  "SL" = "Slider",
+  "CH" = "Changeup",
+  "FC" = "Cutter",
+  "ST" = "Sweeper",
+  "CU" = "Curveball",
+  "FS" = "Splitter",
+  "KC" = "Knuckle Curve",
+  "SV" = "Slurve"
+)
+
+# Identify the top 6 countries by pitch volume
+top_countries <- pitch_data |>
+  count(country_name) |>
+  slice_max(n, n = 6) |>
+  pull(country_name)
+
+# Sample 400 pitches per country for a balanced and responsive plot
+set.seed(42)
+country_sample <- pitch_data |>
+  filter(country_name %in% top_countries, pitch_type %in% names(pitch_labels)) |>
+  drop_na(release_speed, release_spin_rate, player_name) |>
+  slice_sample(n = 400, by = country_name) |>
+  mutate(pitch_name = pitch_labels[pitch_type])
+
+# Scatter plot of velocity vs spin rate faceted by country
+p_scatter <- ggplot(country_sample, aes(
+  x = release_speed,
+  y = release_spin_rate,
+  color = pitch_name,
+  text = paste0(
+    "<b>", player_name, "</b><br>",
+    "Country: ", country_name, "<br>",
+    "Pitch: ", pitch_name, "<br>",
+    "Velocity: ", release_speed, " mph<br>",
+    "Spin Rate: ", release_spin_rate, " rpm"
+  )
+)) +
+  geom_point(alpha = 0.5, size = 1) +
+  facet_wrap(~country_name, nrow = 2) +
+  scale_color_brewer(palette = "Paired") +
+  labs(
+    title = "Pitch Velocity vs. Spin Rate by Country",
+    subtitle = "Sample of individual pitches across the top 6 represented countries",
+    x = "Release Speed (mph)",
+    y = "Release Spin Rate (rpm)",
+    color = "Pitch Type"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 14)
+  )
+
+ggplotly(p_scatter, tooltip = "text")
+```

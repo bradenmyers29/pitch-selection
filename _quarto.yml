@@ -1,0 +1,35 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - splitter.qmd
+    - characteristics.qmd
+    - sinker.qmd
+    - two-strike.qmd
+    - emulation.qmd
+    - about.qmd
+
+website:
+  title: "Pitch Preference by Nationality"
+  navbar:
+    background: "#212529"
+    right:
+      - text: "Home"
+        href: index.qmd
+      - text: "Japanese Splitter"
+        href: splitter.qmd
+      - text: "Pitch Characteristics"
+        href: characteristics.qmd
+      - text: "Dominican Sinker"
+        href: sinker.qmd
+      - text: "Two-Strike Pitches"
+        href: two-strike.qmd
+      - text: "Athletic Emulation"
+        href: emulation.qmd
+      - text: "About"
+        href: about.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: false

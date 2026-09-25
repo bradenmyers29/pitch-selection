@@ -1,0 +1,86 @@
+---
+title: "Two-Strike Put-Away Pitches"
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+When a pitcher reaches a two-strike count, pitching strategy fundamentally changes. In neutral or hitter-friendly counts, pitchers often prioritize throwing strikes with fastballs or sinkers to induce early ground balls and weak contact. But with two strikes, the focus pivots to swings and misses.
+
+Across nationalities, distinct strategic identities emerge in how pitchers hunt for strike three:
+
+- **Japan's Splitter Surge:** Japanese pitchers lean on the splitter far more heavily with two strikes, jumping to **22.7%** of their two-strike offerings (up from 9.1% with zero strikes). It acts as the premier wipeout pitch, tumbling beneath the strike zone right as batters commit to swing.
+- **Dominican Republic's Off-Speed Shift:** While Dominican pitchers open at-bats with heavy sinkers (36.4% on 0-0), they pivot decisively with two strikes. Sinker usage drops in half to 18.0%, while **Changeups (22.3%)** and **Sliders (19.3%)** take center stage to generate whiffs.
+- **USA & Venezuela:** High four-seam fastballs remain the weapon of choice (>30%), paired with hard horizontal breaking balls like sweepers and sliders to catch hitters guessing.
+
+```{r}
+library(tidyverse)
+library(plotly)
+
+# Load Statcast pitching data
+pitch_data <- read_csv("data/statcast_pitchers.csv", show_col_types = FALSE)
+
+# Map Statcast pitch abbreviations to full names
+pitch_labels <- c(
+  "FF" = "4-Seam Fastball",
+  "SI" = "Sinker",
+  "SL" = "Slider",
+  "CH" = "Changeup",
+  "FC" = "Cutter",
+  "ST" = "Sweeper",
+  "CU" = "Curveball",
+  "FS" = "Splitter",
+  "KC" = "Knuckle Curve",
+  "SV" = "Slurve"
+)
+
+# Identify the top 6 countries by pitch volume
+top_countries <- pitch_data |>
+  count(country_name) |>
+  slice_max(n, n = 6) |>
+  pull(country_name)
+
+clean_data <- pitch_data |>
+  filter(country_name %in% top_countries, pitch_type %in% names(pitch_labels)) |>
+  mutate(pitch_name = pitch_labels[pitch_type])
+
+# Filter to 2-strike counts across top countries
+two_strike_data <- clean_data |>
+  filter(strikes == 2) |>
+  count(country_name, pitch_name) |>
+  group_by(country_name) |>
+  mutate(pct = round(n / sum(n) * 100, 1)) |>
+  ungroup()
+
+# Faceted bar plot for 2-strike pitch selection
+p_two_strike <- ggplot(two_strike_data, aes(
+  x = pct,
+  y = reorder(pitch_name, pct),
+  fill = country_name,
+  text = paste0(
+    "<b>", country_name, " (2 Strikes)</b><br>",
+    pitch_name, ": ", pct, "%<br>",
+    "Pitches: ", scales::comma(n)
+  )
+)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~country_name, nrow = 2) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_x_continuous(labels = \(x) paste0(x, "%"), limits = c(0, 45)) +
+  labs(
+    title = "Two-Strike Put-Away Pitches by Nationality",
+    subtitle = "Percentage of pitches thrown when pitchers reach 2 strikes",
+    x = "Usage (%)",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 14)
+  )
+
+ggplotly(p_two_strike, tooltip = "text")
+```
