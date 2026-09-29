@@ -1,5 +1,4 @@
 ---
-title: "Pitch Preference by Nationality"
 format: html
 execute:
   echo: false
